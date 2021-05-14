@@ -1,0 +1,14 @@
+{
+  "name": "twitbot-tauri",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@tauri-apps/api": "^1.0.0-beta-rc.3",
+    "@tauri-apps/cli": "^1.0.0-beta-rc.4",
+    "@rollup/plugin-commonjs": "^15.0.0",
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "@rollup/plugin-replace": "^2.3.3",
+    "rollup": "^2.47.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "TwitBot",
+  "application": {
+    "title": "TwitBot"
+  },
+  "source-directories": [
+    "source"
+  ],
+  "external": {
+    "javascripts": [
+      "assets/javascripts/tauri.js",
+      "assets/javascripts/sha1hmac.js"
+    ]
+  },
+  "dependencies": {
+    "mint-ui": {
+      "repository": "https://github.com/mint-lang/mint-ui",
+      "constraint": "1.0.0 <= v < 2.0.0"
+    }
+  }
+}
