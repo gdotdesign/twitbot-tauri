@@ -1,8 +1,10 @@
 module Tauri.Fs {
+  /* Reads a the file on the given path. */
   fun readTextFile (path : String) : Promise(Never, String) {
     `Tauri.fs.readTextFile(#{path})`
   }
 
+  /* Writes the given contents to the file on the given path. */
   fun writeFile (path : String, contents : String) : Promise(Never, Void) {
     `
     Tauri.fs.writeFile({
@@ -14,13 +16,8 @@ module Tauri.Fs {
 }
 
 module Tauri.Path {
+  /* Resovles the given path based on the base directory. */
   fun resolvePath (path : String) : Promise(Never, String) {
     `Tauri.path.resolvePath(#{path}, Tauri.fs.BaseDirectory.Config)`
-  }
-}
-
-module Tauri.Notification {
-  fun sendNotification (title : String, body : String, icon : String) {
-    `Tauri.notification.sendNotification({ title: #{title}, body: #{body}, icon: #{icon} })`
   }
 }

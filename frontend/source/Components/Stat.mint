@@ -1,7 +1,11 @@
 component Stat {
+  /* The count to display. */
   property count : Html = <{  }>
+
+  /* The label to display. */
   property label : Html = <{  }>
 
+  /* Styles for the base element. */
   style base {
     strong {
       font-size: 3em;
@@ -14,6 +18,7 @@ component Stat {
     }
   }
 
+  /* Renders the component. */
   fun render : Html {
     <div::base>
       <strong>

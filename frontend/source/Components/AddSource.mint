@@ -1,8 +1,11 @@
 component AddSource {
+  /* The submit event handler. */
   property onSubmit : Function(String, Promise(Never, Void)) = Promise.never1
 
+  /* The value of the input. */
   state value : String = ""
 
+  /* Handles the click event of the button. */
   fun handleClick (event : Html.Event) : Promise(Never, Void) {
     sequence {
       onSubmit(value)
@@ -10,15 +13,14 @@ component AddSource {
     }
   }
 
+  /* Handles the change event of the input. */
   fun handleChange (value : String) {
     next { value = value }
   }
 
+  /* Renders the component. */
   fun render : Html {
-    <Ui.Container
-      orientation="vertical"
-      align="stretch">
-
+    <Ui.Column gap={Ui.Size::Em(1)}>
       <Ui.Field label="Twitter Handle:">
         <Ui.Input
           onChange={handleChange}
@@ -31,7 +33,6 @@ component AddSource {
         onClick={handleClick}
         type="secondary"
         label="Add"/>
-
-    </Ui.Container>
+    </Ui.Column>
   }
 }

@@ -1,32 +1,34 @@
 component Pages.Tweets {
   connect App exposing { data, update }
 
+  /* Deletes a source by the given name. */
   fun deleteSource (screenName : String) {
     data
     |> Twitbot.deleteTweetSource(screenName)
     |> update
   }
 
+  /* Adds a source by the given name. */
   fun addSource (screenName : String) {
     data
     |> Twitbot.addTweetSource(screenName)
     |> update
   }
 
+  /* Style for the icon. */
   style centered {
     text-align: center;
   }
 
+  /* Renders the component. */
   fun render : Html {
     <>
       <Page type="two-column">
-        <Ui.Container
-          orientation="vertical"
+        <Ui.Column
           gap={Ui.Size::Em(2)}
-          justify="start"
-          align="stretch">
+          justify="start">
 
-          <Ui.Box title=<{ "Retweet Bot" }>>
+          <Ui.Box>
             <p>"Automatically retweet tweets of the sources sepcified below."</p>
 
             <BotStatus
@@ -40,7 +42,7 @@ component Pages.Tweets {
           </Ui.Box>
 
           if (data.retweetCount > 0) {
-            <Ui.Box title=<{ "Stats" }>>
+            <Ui.Box label=<{ "Stats" }>>
               <Stat
                 label=<{ "Rewteets" }>
                 count=<{ "#{data.retweetCount}" }>/>
@@ -48,7 +50,7 @@ component Pages.Tweets {
           }
 
           if (Array.size(data.retweetSources) > 0) {
-            <Ui.Box title=<{ "Sources" }>>
+            <Ui.Box label=<{ "Sources" }>>
               <p>"Tweets are automatically loaded from these sources when needed."</p>
 
               <SourceList
@@ -57,15 +59,39 @@ component Pages.Tweets {
             </Ui.Box>
           }
 
-          <Ui.Box title=<{ "Add Source" }>>
+          <Ui.Box label=<{ "Add Source" }>>
             <AddSource onSubmit={addSource}/>
           </Ui.Box>
 
-        </Ui.Container>
+        </Ui.Column>
 
         if (Array.size(data.retweets) > 0) {
-          <Ui.Box title=<{ "Retweet Queue" }>>
+          <Ui.Box label=<{ "Retweet Queue" }>>
             <p>"One of the following tweets will be retweeted every 5 minutes (in display order)."</p>
+
+            <Ui.Icon
+              icon={Ui.Icons:REPLY}
+              size={Ui.Size::Em(1.25)}
+              interactive={true}
+              onClick={
+                (event : Html.Event) {
+                  data
+                  |> Twitbot.retweetNext
+                  |> update
+                }
+              }/>
+
+            <Ui.Icon
+              icon={Ui.Icons:DASH}
+              size={Ui.Size::Em(1.25)}
+              interactive={true}
+              onClick={
+                (event : Html.Event) {
+                  data
+                  |> Twitbot.unRetweetNext
+                  |> update
+                }
+              }/>
 
             try {
               headers =
@@ -125,7 +151,22 @@ component Pages.Tweets {
           <EmptyMessage
             subtitle=<{ "You can add sources to get tweets from with the form on the left." }>
             image={@asset(../../assets/images/robot-empty-state.png)}
-            title=<{ "There are no teweets to retweet!" }>/>
+            title=<{ "There are no teweets to retweet!" }>
+            actions=<{
+              if (!Array.isEmpty(data.retweetSources)) {
+                <Ui.Button
+                  label="Get more Tweets!"
+                  onClick={
+                    (event : Html.Event) {
+                      data
+                      |> Twitbot.getNewTweets(0)
+                      |> update
+                    }
+                  }/>
+              } else {
+                <{  }>
+              }
+            }>/>
         }
       </Page>
     </>

@@ -1,105 +1,25 @@
-store App {
-  const TICK_INTERVAL = 300000
-  const UNDO_INTERVAL = 300000
-
-  state initialized = false
-
-  state data =
-    {
-      retweetCursors = Map.empty(),
-      retweetBotEnabled = false,
-      retweetedTweets = [],
-      retweetSources = [],
-      retweetCount = 0,
-      retweets = [],
-      followCursors = Map.empty(),
-      followBotEnabled = false,
-      followedUsers = [],
-      followSources = [],
-      followCount = 0,
-      follows = [],
-      settings =
-        {
-          accessTokenSecret = "",
-          accessToken = "",
-          consumerSecret = "",
-          consumerKey = "",
-          valid = false
-        }
-    }
-
-  fun initialize {
-    if (initialized) {
-      next {  }
-    } else {
-      sequence {
-        data =
-          Twitbot.load()
-
-        next
-          {
-            data = data,
-            initialized = true
-          }
-
-        `setInterval(#{tick}, #{TICK_INTERVAL})`
-      } catch {
-        next {  }
-      }
-    }
-  }
-
-  fun tick {
-    sequence {
-      if (data.retweetBotEnabled) {
-        sequence {
-          update(Twitbot.retweetNext(data))
-          update(Twitbot.unRetweetNext(data))
-        }
-      } else {
-        next {  }
-      }
-
-      if (data.followBotEnabled) {
-        sequence {
-          update(Twitbot.followNext(data))
-          update(Twitbot.unFollowNext(data))
-        }
-      } else {
-        next {  }
-      }
-    }
-  }
-
-  fun update (data : Promise(a, TwitBot.Data)) {
-    sequence {
-      newData =
-        data
-
-      next { data = newData }
-      Twitbot.save(newData)
-    } catch {
-      next {  }
-    }
-  }
-}
-
 module Twitbot {
+  /* Follows the next followable user. */
   fun followNext (data : TwitBot.Data) {
-    try {
-      user =
-        data.follows[0]
+    case (data.follows[0]) {
+      Maybe::Just(item) =>
+        try {
+          updatedFollows =
+            Array.delete(item, data.follows)
 
-      case (user) {
-        Maybe::Just item =>
           sequence {
-            Twitter.User.friendshipsCreate(data.settings, [{"screen_name", item.screenName}])
-            Tauri.Notification.sendNotification("Twitbot", "Followed User: @#{item.screenName}", "")
+            Twitter.User.friendshipsCreate(
+              data.settings,
+              [
+                {"screen_name", item.screenName}
+              ])
+
+            Ui.Notifications.notifyDefault(<{ "Followed User: @#{item.screenName}" }>)
 
             Promise.resolve(
               { data |
-                follows = Array.delete(item, data.follows),
                 followCount = data.followCount + 1,
+                follows = updatedFollows,
                 followedUsers =
                   Array.push(
                     {
@@ -108,24 +28,28 @@ module Twitbot {
                     },
                     data.followedUsers)
               })
-          } catch {
-            Promise.resolve(data)
-          }
-
-        Maybe::Nothing =>
-          sequence {
-            Tauri.Notification.sendNotification("Twitbot", "Getting new users to follow.", "")
-            getNewFollows(0, data)
           } catch String => error {
             try {
               Debug.log(error)
-              Promise.resolve(data)
+              Promise.resolve({ data | follows = updatedFollows })
             }
           }
-      }
+        }
+
+      Maybe::Nothing =>
+        sequence {
+          Ui.Notifications.notifyDefault(<{ "Getting new users to follow." }>)
+          getNewFollows(0, data)
+        } catch String => error {
+          try {
+            Debug.log(error)
+            Promise.resolve(data)
+          }
+        }
     }
   }
 
+  /* Unfollows the next followed user. */
   fun unFollowNext (data : TwitBot.Data) {
     try {
       tweet =
@@ -134,17 +58,26 @@ module Twitbot {
         |> Array.first
 
       case (tweet) {
-        Maybe::Just item =>
-          sequence {
-            Twitter.User.friendshipsDestroy(data.settings, [{"screen_name", item.user.screenName}])
-            Tauri.Notification.sendNotification("Twitbot", "Unfollowed User: @#{item.user.screenName}", "")
+        Maybe::Just(item) =>
+          try {
+            updatedData =
+              { data | followedUsers = Array.delete(item, data.followedUsers) }
 
-            Promise.resolve(
-              { data | followedUsers = Array.delete(item, data.followedUsers) })
-          } catch String => error {
-            try {
-              Debug.log(error)
-              Promise.resolve(data)
+            sequence {
+              Twitter.User.friendshipsDestroy(
+                data.settings,
+                [
+                  {"screen_name", item.user.screenName}
+                ])
+
+              Ui.Notifications.notifyDefault(<{ "Unfollowed User: @#{item.user.screenName}" }>)
+
+              Promise.resolve(updatedData)
+            } catch String => error {
+              try {
+                Debug.log(error)
+                Promise.resolve(updatedData)
+              }
             }
           }
 
@@ -153,21 +86,22 @@ module Twitbot {
     }
   }
 
+  /* Retweets the next tweet. */
   fun retweetNext (data : TwitBot.Data) {
-    try {
-      tweet =
-        data.retweets[0]
+    case (data.retweets[0]) {
+      Maybe::Just(item) =>
+        try {
+          updatedRetweets =
+            Array.delete(item, data.retweets)
 
-      case (tweet) {
-        Maybe::Just item =>
           sequence {
             Twitter.Statuses.retweet(item.id, data.settings, [])
-            Tauri.Notification.sendNotification("Twitbot", "Retweeted tweet:\n#{item.text}", "")
+            Ui.Notifications.notifyDefault(<{ "Retweeted tweet:\n#{item.text}" }>)
 
             Promise.resolve(
               { data |
-                retweets = Array.delete(item, data.retweets),
                 retweetCount = data.retweetCount + 1,
+                retweets = updatedRetweets,
                 retweetedTweets =
                   Array.push(
                     {
@@ -179,21 +113,22 @@ module Twitbot {
           } catch String => error {
             try {
               Debug.log(error)
-              Promise.resolve(data)
+              Promise.resolve({ data | retweets = updatedRetweets })
             }
           }
+        }
 
-        Maybe::Nothing =>
-          sequence {
-            Tauri.Notification.sendNotification("Twitbot", "Getting new tweets to retweet.", "")
-            getNewTweets(0, data)
-          } catch {
-            Promise.resolve(data)
-          }
-      }
+      Maybe::Nothing =>
+        sequence {
+          Ui.Notifications.notifyDefault(<{ "Getting new tweets to retweet." }>)
+          getNewTweets(0, data)
+        } catch {
+          Promise.resolve(data)
+        }
     }
   }
 
+  /* Unretweets the next retweeted tweet. */
   fun unRetweetNext (data : TwitBot.Data) {
     try {
       tweet =
@@ -202,17 +137,21 @@ module Twitbot {
         |> Array.first
 
       case (tweet) {
-        Maybe::Just item =>
-          sequence {
-            Twitter.Statuses.unretweet(item.tweet.id, data.settings, [])
-            Tauri.Notification.sendNotification("Twitbot", "Unretweeted tweet: #{item.tweet.text}", "")
+        Maybe::Just(item) =>
+          try {
+            updatedData =
+              { data | retweetedTweets = Array.delete(item, data.retweetedTweets) }
 
-            Promise.resolve(
-              { data | retweetedTweets = Array.delete(item, data.retweetedTweets) })
-          } catch String => error {
-            try {
-              Debug.log(error)
-              Promise.resolve(data)
+            sequence {
+              Twitter.Statuses.unretweet(item.tweet.id, data.settings, [])
+              Ui.Notifications.notifyDefault(<{ "Unretweeted tweet: #{item.tweet.text}" }>)
+
+              Promise.resolve(updatedData)
+            } catch String => error {
+              try {
+                Debug.log(error)
+                Promise.resolve(updatedData)
+              }
             }
           }
 
@@ -221,12 +160,21 @@ module Twitbot {
     }
   }
 
+  /* Deletes a tweet. */
   fun deleteTweet (id : String, data : TwitBot.Data) {
     sequence {
       { data | retweets = Array.reject((tweet : Tweet) { tweet.id == id }, data.retweets) }
     }
   }
 
+  /* Deletes a follow. */
+  fun deleteFollow (id : String, data : TwitBot.Data) {
+    sequence {
+      { data | follows = Array.reject((user : User) { user.id == id }, data.follows) }
+    }
+  }
+
+  /* Updates the settings. */
   fun updateSettings (newSettings : Settings, data : TwitBot.Data) {
     sequence {
       settings =
@@ -243,10 +191,12 @@ module Twitbot {
     }
   }
 
+  /* Deletes a tweet source. */
   fun deleteTweetSource (screenName : String, data : TwitBot.Data) {
     Promise.resolve({ data | retweetSources = Array.delete(screenName, data.retweetSources) })
   }
 
+  /* Adds a tweet source. */
   fun addTweetSource (screenName : String, data : TwitBot.Data) {
     if (Array.contains(screenName, data.retweetSources)) {
       Promise.resolve(data)
@@ -260,9 +210,10 @@ module Twitbot {
     }
   }
 
+  /* Get new tweets for a given user at the given index. */
   fun getNewTweets (index : Number, data : TwitBot.Data) {
     case (data.retweetSources[index]) {
-      Maybe::Just source =>
+      Maybe::Just(source) =>
         sequence {
           newData =
             getTweetsOfUser(source, data)
@@ -274,22 +225,7 @@ module Twitbot {
     }
   }
 
-  fun getNewFollows (index : Number, data : TwitBot.Data) {
-    case (data.followSources[index]) {
-      Maybe::Just source =>
-        sequence {
-          newData =
-            getFollowersOfUser(source, data)
-
-          getNewFollows(index + 1, newData)
-        } catch {
-          Promise.resolve(data)
-        }
-
-      Maybe::Nothing => Promise.resolve(data)
-    }
-  }
-
+  /* Gets the tweets of a user by screen name. */
   fun getTweetsOfUser (screenName : String, data : TwitBot.Data) {
     sequence {
       cursors =
@@ -393,16 +329,18 @@ module Twitbot {
         }
 
       { data |
-        retweets = Array.concat([data.retweets, headTweets, tailTweets]),
-        retweetCursors = Map.set(screenName, newCursors, data.retweetCursors)
+        retweetCursors = Map.set(screenName, newCursors, data.retweetCursors),
+        retweets = Array.concat([data.retweets, headTweets, tailTweets])
       }
     }
   }
 
+  /* Deletes a follow source. */
   fun deleteFollowSource (screenName : String, data : TwitBot.Data) {
     Promise.resolve({ data | followSources = Array.delete(screenName, data.followSources) })
   }
 
+  /* Adds a follow source. */
   fun addFollowSource (screenName : String, data : TwitBot.Data) {
     if (Array.contains(screenName, data.followSources)) {
       Promise.resolve(data)
@@ -418,6 +356,24 @@ module Twitbot {
     }
   }
 
+  /* Get new follows for a given user at the given index. */
+  fun getNewFollows (index : Number, data : TwitBot.Data) {
+    case (data.followSources[index]) {
+      Maybe::Just(source) =>
+        sequence {
+          newData =
+            getFollowersOfUser(source, data)
+
+          getNewFollows(index + 1, newData)
+        } catch {
+          Promise.resolve(data)
+        }
+
+      Maybe::Nothing => Promise.resolve(data)
+    }
+  }
+
+  /* Get the new followers of a user. */
   fun getFollowersOfUser (screenName : String, data : TwitBot.Data) {
     sequence {
       cursor =
@@ -447,8 +403,8 @@ module Twitbot {
 
       Promise.resolve(
         { data |
-          follows = Array.concat([data.follows, response.users]),
-          followCursors = Map.set(screenName, newCursor, data.followCursors)
+          followCursors = Map.set(screenName, newCursor, data.followCursors),
+          follows = Array.concat([data.follows, response.users])
         })
     } catch String => error {
       try {
@@ -458,7 +414,8 @@ module Twitbot {
     }
   }
 
-  fun save (data : TwitBot.Data) {
+  /* Saves the data to disk. */
+  fun save (data : TwitBot.Data) : Promise(Never, Void) {
     sequence {
       path =
         Tauri.Path.resolvePath("twitbot/database.json")
@@ -470,7 +427,8 @@ module Twitbot {
     }
   }
 
-  fun load {
+  /* Loads the data from the disk. */
+  fun load : Promise(String, TwitBot.Data) {
     sequence {
       path =
         Tauri.Path.resolvePath("twitbot/database.json")
@@ -487,7 +445,7 @@ module Twitbot {
 
       Promise.resolve(data)
     } catch {
-      Promise.reject("")
+      Promise.reject("Could not load database!")
     }
   }
 }

@@ -1,8 +1,10 @@
+/* Represents an agent / bot. */
 record Agent {
   running : Bool,
   stat : Number
 }
 
+/* Represents a user. */
 record User {
   profileImage : String using "profile_image_url_https",
   followersCount : Number using "followers_count",
@@ -13,12 +15,14 @@ record User {
   name : String
 }
 
+/* Represents a tweet. */
 record Tweet {
   id : String using "id_str",
   text : String,
   user : User
 }
 
+/* Represents the settings. */
 record Settings {
   accessTokenSecret : String,
   accessToken : String,
@@ -27,31 +31,25 @@ record Settings {
   valid : Bool
 }
 
-record State {
-  tweetSources : Array(String),
-  userSources : Array(String),
-  tweets : Array(Tweet),
-  users : Array(User),
-  settings : Settings,
-  followAgent : Agent,
-  tweetAgent : Agent
-}
-
+/* Represents a cursor. */
 record Cursor {
   head : String,
   tail : String
 }
 
+/* Represents the status of a tweet. */
 record TweetStatus {
-  time : Time,
-  tweet : Tweet
+  tweet : Tweet,
+  time : Time
 }
 
+/* Represents the status of a follow. */
 record UserStatus {
   time : Time,
   user : User
 }
 
+/* Represents the state of the application. */
 record TwitBot.Data {
   retweetedTweets : Array(TweetStatus),
   retweetCursors : Map(String, Cursor),
@@ -66,4 +64,12 @@ record TwitBot.Data {
   followCount : Number,
   follows : Array(User),
   settings : Settings
+}
+
+/* Represents the pages of the application. */
+enum Page {
+  FollowBot
+  TweetBot
+  Settings
+  Initial
 }

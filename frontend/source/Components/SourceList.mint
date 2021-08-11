@@ -1,7 +1,11 @@
 component SourceList {
+  /* The delete event handler. */
   property onDelete : Function(String, Promise(Never, Void)) = Promise.never1
+
+  /* The sources to display. */
   property sources : Array(String) = []
 
+  /* Styles for the base element. */
   style base {
     line-height: 26px;
     font-weight: bold;
@@ -15,13 +19,11 @@ component SourceList {
     }
   }
 
+  /* Renders the component. */
   fun render : Html {
-    <Ui.Container
-      orientation="vertical"
-      align="stretch">
-
+    <Ui.Column>
       for (source of sources) {
-        <Ui.Container justify="space-between">
+        <Ui.Row justify="space-between">
           <div>"@#{source}"</div>
 
           <Ui.Icon
@@ -29,9 +31,8 @@ component SourceList {
             icon={@svg(../../assets/icons/delete.svg)}
             size={Ui.Size::Em(1.25)}
             interactive={true}/>
-        </Ui.Container>
+        </Ui.Row>
       }
-
-    </Ui.Container>
+    </Ui.Column>
   }
 }

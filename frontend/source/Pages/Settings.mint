@@ -1,27 +1,20 @@
 component Pages.Settings {
-  connect Application exposing {openLink}
+  connect Application exposing { openLink }
   connect App exposing { data, update }
 
+  /* The state for the consumer secret. */
   state consumerSecret : Maybe(String) = Maybe::Nothing
+
+  /* The state for the consumer key. */
   state consumerKey : Maybe(String) = Maybe::Nothing
 
+  /* The state for the access token secret. */
   state accessTokenSecret : Maybe(String) = Maybe::Nothing
+
+  /* The state for the access token. */
   state accessToken : Maybe(String) = Maybe::Nothing
 
-  style field {
-    label {
-      margin-bottom: 7px;
-      font-weight: 500;
-      display: block;
-    }
-  }
-
-  style fields {
-    > * + * {
-      margin-top: 20px;
-    }
-  }
-
+  /* Styles for the status box. */
   style status {
     border-radius: 0.375em;
     font-weight: bold;
@@ -43,66 +36,71 @@ component Pages.Settings {
     }
   }
 
+  /* Saves the settings. */
   fun save (event : Html.Event) {
     data
-    |> Twitbot.updateSettings({
-      consumerSecret = Maybe.withDefault(data.settings.consumerSecret, consumerSecret),
-      consumerKey = Maybe.withDefault(data.settings.consumerKey, consumerKey),
-      accessTokenSecret = Maybe.withDefault(data.settings.accessTokenSecret, accessTokenSecret),
-      accessToken = Maybe.withDefault(data.settings.accessToken, accessToken),
-      valid = false
-    })
+    |> Twitbot.updateSettings(
+      {
+        consumerSecret = consumerSecret or data.settings.consumerSecret,
+        consumerKey = consumerKey or data.settings.consumerKey,
+        accessTokenSecret = accessTokenSecret or data.settings.accessTokenSecret,
+        accessToken = accessToken or data.settings.accessToken,
+        valid = false
+      })
     |> update
   }
 
+  /* Sets the consumer key. */
   fun setConsumerKey (value : String) {
     next { consumerKey = Maybe::Just(value) }
   }
 
+  /* Sets the consumer secret. */
   fun setConsumerSecret (value : String) {
     next { consumerSecret = Maybe::Just(value) }
   }
 
+  /* Sets the access token secret. */
   fun setAccessTokenSecret (value : String) {
     next { accessTokenSecret = Maybe::Just(value) }
   }
 
+  /* Sets the access token. */
   fun setAccessToken (value : String) {
     next { accessToken = Maybe::Just(value) }
   }
 
+  /* Renders the component. */
   fun render : Html {
     <Page type="settings">
-      <Ui.Box title=<{ "Settings" }>>
+      <Ui.Box>
         <p>"You can configure TwitBot here."</p>
 
-        <Ui.Container
-          orientation="vertical"
+        <Ui.Column
           gap={Ui.Size::Em(1.5)}
-          justify="start"
-          align="stretch">
+          justify="start">
 
           <Ui.Field label="Consumer Key:">
             <Ui.Input
-              value={Maybe.withDefault(data.settings.consumerKey, consumerKey)}
+              value={consumerKey or data.settings.consumerKey}
               onChange={setConsumerKey}/>
           </Ui.Field>
 
           <Ui.Field label="Consumer Secret:">
             <Ui.Input
-              value={Maybe.withDefault(data.settings.consumerSecret, consumerSecret)}
+              value={consumerSecret or data.settings.consumerSecret}
               onChange={setConsumerSecret}/>
           </Ui.Field>
 
           <Ui.Field label="Access Token:">
             <Ui.Input
-              value={Maybe.withDefault(data.settings.accessToken, accessToken)}
+              value={accessToken or data.settings.accessToken}
               onChange={setAccessToken}/>
           </Ui.Field>
 
           <Ui.Field label="Access Token Secret:">
             <Ui.Input
-              value={Maybe.withDefault(data.settings.accessTokenSecret, accessTokenSecret)}
+              value={accessTokenSecret or data.settings.accessTokenSecret}
               onChange={setAccessTokenSecret}/>
           </Ui.Field>
 
@@ -131,7 +129,7 @@ component Pages.Settings {
             onClick={save}
             label="Save"/>
 
-        </Ui.Container>
+        </Ui.Column>
       </Ui.Box>
 
       <EmptyMessage

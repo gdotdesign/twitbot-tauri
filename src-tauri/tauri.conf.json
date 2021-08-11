@@ -1,13 +1,12 @@
 {
   "package": {
     "productName": "Twitbot",
-    "version": "0.1.0"
+    "version": "1.0.0"
   },
   "build": {
-    "distDir": "../../twitbot/frontend/dist",
+    "distDir": "../frontend/dist",
     "devPath": "http://localhost:3000",
-    "beforeDevCommand": "",
-    "beforeBuildCommand": ""
+    "beforeDevCommand": "cd frontend && mint start"
   },
   "tauri": {
     "bundle": {

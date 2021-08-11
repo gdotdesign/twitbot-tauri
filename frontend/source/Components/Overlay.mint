@@ -1,8 +1,9 @@
 global component Overlay {
-  connect Ui exposing { mobile }
   connect Application exposing { page }
+  connect Ui exposing { mobile }
   connect App exposing { data }
 
+  /* Styles for the base element. */
   style base {
     background: rgba(0,0,0,0.75);
     position: fixed;
@@ -24,6 +25,7 @@ global component Overlay {
     }
   }
 
+  /* Renders the component. */
   fun render {
     if (data.settings.valid || page == Page::Settings) {
       <></>

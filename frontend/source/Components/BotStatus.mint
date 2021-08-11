@@ -1,8 +1,14 @@
 component BotStatus {
+  /* The start event handler. */
   property onStart : Function(Promise(Never, Void)) = Promise.never
+
+  /* The stop event handler. */
   property onStop : Function(Promise(Never, Void)) = Promise.never
+
+  /* The wether or not the bot is running. */
   property running : Bool = false
 
+  /* Styles for the status. */
   style status {
     justify-content: start;
     grid-auto-flow: column;
@@ -29,6 +35,7 @@ component BotStatus {
     }
   }
 
+  /* Handles the click event of the start button. */
   fun handleStart (event : Html.Event) : Promise(Never, Void) {
     sequence {
       onStart()
@@ -36,6 +43,7 @@ component BotStatus {
     }
   }
 
+  /* Handles the click event of the stop button. */
   fun handleStop (event : Html.Event) : Promise(Never, Void) {
     sequence {
       onStop()
@@ -43,11 +51,9 @@ component BotStatus {
     }
   }
 
+  /* Renders the component. */
   fun render : Html {
-    <Ui.Container
-      orientation="vertical"
-      align="stretch">
-
+    <Ui.Column>
       if (running) {
         <>
           <div::status>
@@ -72,7 +78,6 @@ component BotStatus {
             label="Start"/>
         </>
       }
-
-    </Ui.Container>
+    </Ui.Column>
   }
 }

@@ -1,33 +1,35 @@
 component Pages.FollowBot {
   connect App exposing { data, update }
 
-  fun deleteSource (screenName : String) {
+  /* Deletes a source by the given name. */
+  fun deleteSource (screenName : String) : Promise(Never, Void) {
     data
     |> Twitbot.deleteFollowSource(screenName)
     |> update()
   }
 
-  fun addSource (screenName : String) {
+  /* Adds a source by the given name. */
+  fun addSource (screenName : String) : Promise(Never, Void) {
     data
     |> Twitbot.addFollowSource(screenName)
     |> update()
   }
 
+  /* Style for the icon. */
   style centered {
     text-align: center;
   }
 
+  /* Renders the component. */
   fun render : Html {
     <>
       <Page type="two-column">
-        <Ui.Container
-          orientation="vertical"
+        <Ui.Column
           gap={Ui.Size::Em(2)}
-          justify="start"
-          align="stretch">
+          justify="start">
 
-          <Ui.Box title=<{ "Follow Bot" }>>
-            <p>" Automatically follow followers of the sources sepcified below."</p>
+          <Ui.Box>
+            <p>"Automatically follow followers of the sources sepcified below."</p>
 
             <BotStatus
               onStart={() { update(Promise.resolve({ data | followBotEnabled = true })) }}
@@ -36,7 +38,7 @@ component Pages.FollowBot {
           </Ui.Box>
 
           if (data.followCount > 0) {
-            <Ui.Box title=<{ "Stats" }>>
+            <Ui.Box label=<{ "Stats" }>>
               <Stat
                 label=<{ "Follows" }>
                 count=<{ "#{data.followCount}" }>/>
@@ -44,7 +46,7 @@ component Pages.FollowBot {
           }
 
           if (Array.size(data.followSources) > 0) {
-            <Ui.Box title=<{ "Sources" }>>
+            <Ui.Box label=<{ "Sources" }>>
               <p>"Users are automatically loaded from these sources when needed."</p>
 
               <SourceList
@@ -53,14 +55,14 @@ component Pages.FollowBot {
             </Ui.Box>
           }
 
-          <Ui.Box title=<{ "Add Source" }>>
+          <Ui.Box label=<{ "Add Source" }>>
             <AddSource onSubmit={addSource}/>
           </Ui.Box>
 
-        </Ui.Container>
+        </Ui.Column>
 
         if (Array.size(data.follows) > 0) {
-          <Ui.Box title=<{ "Follow Queue" }>>
+          <Ui.Box label=<{ "Follow Queue" }>>
             <p>"One of the following users will be followed every 5 minutes (in display order)."</p>
 
             try {
@@ -110,7 +112,9 @@ component Pages.FollowBot {
                             interactive={true}
                             onClick={
                               (event : Html.Event) {
-                                Application.send("DELETE_USER", Maybe::Just(encode { id = user.id }))
+                                data
+                                |> Twitbot.deleteFollow(user.id)
+                                |> update
                               }
                             }/>
                         </div>)
@@ -129,7 +133,22 @@ component Pages.FollowBot {
           <EmptyMessage
             subtitle=<{ "You can add sources to get users from with the form on the left." }>
             image={@asset(../../assets/images/robot-empty-state.png)}
-            title=<{ "There are no users to follow!" }>/>
+            title=<{ "There are no users to follow!" }>
+            actions=<{
+              if (!Array.isEmpty(data.followSources)) {
+                <Ui.Button
+                  label="Get more users!"
+                  onClick={
+                    (event : Html.Event) {
+                      data
+                      |> Twitbot.getNewFollows(0)
+                      |> update
+                    }
+                  }/>
+              } else {
+                <{  }>
+              }
+            }>/>
         }
       </Page>
     </>

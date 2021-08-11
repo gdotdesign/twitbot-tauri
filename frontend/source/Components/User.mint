@@ -1,15 +1,8 @@
 component User {
-  property user : User =
-    {
-      followersCount = 0,
-      profileImage = "",
-      description = "",
-      verified = false,
-      screenName = "",
-      name = "",
-      id = ""
-    }
+  /* The user to display. */
+  property user : User
 
+  /* Styles for the base element. */
   style base {
     grid-template-columns: min-content 1fr;
     grid-gap: 0.5em;
@@ -21,6 +14,7 @@ component User {
     }
   }
 
+  /* Styles for the name. */
   style name {
     white-space: nowrap;
     font-size: 14px;
@@ -28,6 +22,7 @@ component User {
     display: block;
   }
 
+  /* Styles for the link. */
   style link {
     color: var(--primary-link);
     text-decoration: none;
@@ -35,6 +30,7 @@ component User {
     opacity: 0.75;
   }
 
+  /* Renders the component. */
   fun render : Html {
     <div::base>
       <Ui.Image

@@ -2,11 +2,19 @@ component Main {
   connect Application exposing { page, setPage, openLink }
   connect Ui exposing { mobile, darkMode, toggleDarkMode }
 
+  /* Styles for the base element. */
   style base {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  const TOKENS =
+    Ui:DEFAULT_TOKENS
+    |> Ui.Token.setToken(Ui.Token::Simple(name = "primary-link", value = "rgb(255, 105, 250)"))
+    |> Ui.Token.setToken(Ui.Token::Simple(name = "primary-hover", value = "#CC2CB8"))
+    |> Ui.Token.setToken(Ui.Token::Simple(name = "primary-color", value = "#f40fd7"))
+
+  /* Returns the dark mode toggle navigation item. */
   get darkModeToggle : Ui.NavItem {
     if (mobile) {
       try {
@@ -35,6 +43,7 @@ component Main {
     }
   }
 
+  /* Renders the component. */
   fun render : Html {
     if (page == Page::Initial) {
       <></>
@@ -47,8 +56,8 @@ component Main {
                 iconBefore = @svg(../assets/icons/users.svg),
                 iconAfter = <></>,
                 href = "/follow-bot",
-                target = "",
-                label = "Follow Bot"),
+                label = "Follow Bot",
+                target = ""),
               Ui.NavItem::Link(
                 iconBefore = @svg(../assets/icons/comment.svg),
                 iconAfter = <></>,
@@ -56,17 +65,17 @@ component Main {
                 href = "/retweet-bot",
                 target = ""),
               Ui.NavItem::Link(
-                href = "/settings",
-                target = "",
                 iconBefore = @svg(../assets/icons/settings.svg),
                 iconAfter = <></>,
-                label = "Settings"),
+                href = "/settings",
+                label = "Settings",
+                target = ""),
               Ui.NavItem::Divider,
               Ui.NavItem::Link(
-                href = "https://twitbot.netlify.app/",
-                target = "_blank",
                 iconBefore = @svg(../assets/icons/help.svg),
                 iconAfter = <></>,
+                href = "https://twitbot.netlify.app/",
+                target = "_blank",
                 label = "Help"),
               Ui.NavItem::Divider,
               darkModeToggle
@@ -87,17 +96,7 @@ component Main {
 
         <Ui.Theme.Root
           fontConfiguration={Ui:DEFAULT_FONT_CONFIGURATION}
-          tokens={
-            Array.concat(
-              [
-                Ui:DEFAULT_TOKENS,
-                [
-                  Ui.Token::Simple(name = "primary-link", value = "rgb(255, 105, 250)"),
-                  Ui.Token::Simple(name = "primary-hover", value = "#CC2CB8"),
-                  Ui.Token::Simple(name = "primary-color", value = "#f40fd7")
-                ]
-              ])
-          }>
+          tokens={TOKENS}>
 
           <div::base>
             <Ui.Layout.Website
